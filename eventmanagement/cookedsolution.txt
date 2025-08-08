@@ -1,0 +1,98 @@
+===============================================================================
+                            BUGGY CODE DEBUGGING SOLUTION
+===============================================================================
+
+ORIGINAL BUGGY CODE:
+===============================================================================
+public class EventServiceImpl implements EventService {
+    
+    @Autowired
+    private EventRepository eventRepo;
+    
+    @Override
+    public Event createEvent(Event event) {
+        if(event.getTitle().length() < 0) {
+            throw new RuntimeException("Invalid title");
+        }
+        return eventRepo.save(event);
+    }
+}
+
+IDENTIFIED BUGS:
+===============================================================================
+
+1. **LOGICAL ERROR IN CONDITION**: 
+   - Bug: `if(event.getTitle().length() < 0)`
+   - Issue: String length can never be negative. This condition will never be true.
+   - Impact: Invalid titles (empty or null) will not be caught.
+
+2. **NULL POINTER EXCEPTION RISK**:
+   - Bug: No null check for `event.getTitle()`
+   - Issue: If title is null, calling `.length()` will throw NullPointerException.
+   - Impact: Application crash when null title is passed.
+
+3. **IMPROPER EXCEPTION HANDLING**:
+   - Bug: Using generic `RuntimeException`
+   - Issue: Should use specific custom exceptions for better error handling.
+   - Impact: Poor error messaging and handling in global exception handler.
+
+4. **WRONG PARAMETER TYPE**:
+   - Bug: Method accepts `Event` entity directly
+   - Issue: Should accept DTO for proper separation of concerns.
+   - Impact: Violates layered architecture principles.
+
+CORRECTED CODE:
+===============================================================================
+@Service
+public class EventServiceImpl implements EventService {
+    
+    @Autowired
+    private EventRepository eventRepository;
+    
+    @Override
+    public EventResponseDto createEvent(EventRequestDto eventRequestDto) {
+        // Null check for the entire request
+        if (eventRequestDto == null) {
+            throw new InvalidRequestException("Event request cannot be null");
+        }
+        
+        // Validate title
+        if (eventRequestDto.getTitle() == null || eventRequestDto.getTitle().trim().isEmpty()) {
+            throw new InvalidRequestException("Event title cannot be null or empty");
+        }
+        
+        // Validate description
+        if (eventRequestDto.getDescription() == null || eventRequestDto.getDescription().trim().isEmpty()) {
+            throw new InvalidRequestException("Event description cannot be null or empty");
+        }
+        
+        // Validate date
+        if (eventRequestDto.getDate() == null) {
+            throw new InvalidRequestException("Event date cannot be null");
+        }
+        
+        // Validate location
+        if (eventRequestDto.getLocation() == null || eventRequestDto.getLocation().trim().isEmpty()) {
+            throw new InvalidRequestException("Event location cannot be null or empty");
+        }
+        
+        // Check if date is in the future
+        if (eventRequestDto.getDate().isBefore(LocalDate.now())) {
+            throw new InvalidRequestException("Event date must be in the future");
+        }
+        
+        // Convert DTO to Entity
+        Event event = EventMapper.toEvent(eventRequestDto);
+        
+        // Save event
+        Event savedEvent = eventRepository.save(event);
+        
+        // Convert Entity to Response DTO
+        return EventMapper.toEventResponseDto(savedEvent);
+    }
+}
+
+
+===============================================================================
+                                END OF SOLUTION
+===============================================================================

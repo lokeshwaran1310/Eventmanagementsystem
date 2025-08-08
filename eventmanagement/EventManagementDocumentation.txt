@@ -1,0 +1,1186 @@
+===============================================================================
+                        EVENT MANAGEMENT SYSTEM DOCUMENTATION
+===============================================================================
+
+EventmanagementApplication.java
+===============================================================================
+package com.example.eventmanagement;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class EventmanagementApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(EventmanagementApplication.class, args);
+	}
+
+}
+
+User.java
+===============================================================================
+package com.example.eventmanagement.domain;
+
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name="event_users")
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private String email;
+    
+    @OneToMany(mappedBy = "user")
+    @JsonIgnore
+    private List<Registrations> registrations;
+    
+    public User() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    public String getEmail() {
+        return email;
+    }
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    public List<Registrations> getRegistrations() {
+        return registrations;
+    }
+    public void setRegistrations(List<Registrations> registrations) {
+        this.registrations = registrations;
+    }
+    
+
+}
+
+Event.java
+===============================================================================
+package com.example.eventmanagement.domain;
+
+import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.util.List;
+
+@Entity
+@Table(name = "events")
+public class Event {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String title;
+    private String description;
+    private String location;
+    private LocalDate date;
+   
+    @OneToMany(mappedBy = "event")
+    private List<Registrations> registrations;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    public List<Registrations> getRegistrations() {
+        return registrations;
+    }
+
+    public void setRegistrations(List<Registrations> registrations) {
+        this.registrations = registrations;
+    }
+
+    
+
+}
+
+Registrations.java
+===============================================================================
+package com.example.eventmanagement.domain;
+
+import jakarta.persistence.*;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "registrations")
+public class Registrations {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(name = "registration_date", nullable = false)
+    private LocalDate registrationDate;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "event_id", nullable = false)
+    private Event event;
+    
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Event getEvent() {
+        return event;
+    }
+
+    public void setEvent(Event event) {
+        this.event = event;
+    }
+
+    public LocalDate getRegistrationDate() {
+        return registrationDate;
+    }
+
+    public void setRegistrationDate(LocalDate registrationDate) {
+        this.registrationDate = registrationDate;
+    }
+}
+
+UserRequestDto.java
+===============================================================================
+package com.example.eventmanagement.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
+public class UserRequestDto {
+
+    @NotBlank(message = "Name is mandatory")
+    private String name;
+
+    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email is mandatory")
+    private String email;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    
+}
+
+UserResponseDto.java
+===============================================================================
+package com.example.eventmanagement.dto;
+
+public class UserResponseDto {
+
+    private Long id;
+    private String name;
+    private String email;
+    public Long getId() {
+        return id;
+    }
+    public void setId(Long id) {
+        this.id = id;
+    }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+    public String getEmail() {
+        return email;
+    }
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    
+    
+
+    
+}
+
+EventRequestDto.java
+===============================================================================
+package com.example.eventmanagement.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Future;
+
+import java.time.LocalDate;
+
+public class EventRequestDto {
+
+    @NotBlank(message = "Title is mandatory")
+    private String title;
+
+    @NotBlank(message = "Description is mandatory")
+    private String description;
+
+    @NotNull(message = "Date is mandatory")
+    @Future(message = "Event date must be in the future")
+    private LocalDate date;
+
+    @NotBlank(message = "Location is mandatory")
+    private String location;
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+}
+
+EventResponseDto.java
+===============================================================================
+package com.example.eventmanagement.dto;
+
+import java.time.LocalDate;
+
+public class EventResponseDto {
+
+    private Long id;
+    private String title;
+    private String description;
+    private LocalDate date;
+    private String location;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+}
+
+RegistrationRequestDto.java
+===============================================================================
+package com.example.eventmanagement.dto;
+
+import jakarta.validation.constraints.NotNull;
+
+public class RegistrationRequestDto {
+
+    @NotNull(message = "User ID is mandatory")
+    private Long userId;
+
+    @NotNull(message = "Event ID is mandatory")
+    private Long eventId;
+
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public Long getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(Long eventId) {
+        this.eventId = eventId;
+    }
+
+
+}
+
+RegistrationResponseDto.java
+===============================================================================
+package com.example.eventmanagement.dto;
+
+import java.time.LocalDate;
+
+public class RegistrationResponseDto {
+
+    private Long id;
+    private Long userId;
+    private String userName;
+    private Long eventId;
+    private String eventTitle;
+    private LocalDate registrationDate;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public Long getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(Long eventId) {
+        this.eventId = eventId;
+    }
+
+    public String getEventTitle() {
+        return eventTitle;
+    }
+
+    public void setEventTitle(String eventTitle) {
+        this.eventTitle = eventTitle;
+    }
+
+    public LocalDate getRegistrationDate() {
+        return registrationDate;
+    }
+
+    public void setRegistrationDate(LocalDate registrationDate) {
+        this.registrationDate = registrationDate;
+    }
+}
+
+UserController.java
+===============================================================================
+package com.example.eventmanagement.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import com.example.eventmanagement.dto.UserRequestDto;
+import com.example.eventmanagement.dto.UserResponseDto;
+import com.example.eventmanagement.service.UserService;
+import jakarta.validation.Valid;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+    
+    @Autowired
+    private UserService userService;
+
+    @PostMapping
+    public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto userRequestDto) {
+        UserResponseDto createdUser = userService.createUser(userRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
+        UserResponseDto user = userService.getUserById(id);
+        return ResponseEntity.ok(user);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<UserResponseDto>> getAllUsers() {
+        List<UserResponseDto> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResponseDto> updateUser(@PathVariable Long id, @Valid @RequestBody UserRequestDto userRequestDto) {
+        UserResponseDto updatedUser = userService.updateUser(id, userRequestDto);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+
+EventController.java
+===============================================================================
+package com.example.eventmanagement.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import com.example.eventmanagement.dto.EventRequestDto;
+import com.example.eventmanagement.dto.EventResponseDto;
+import com.example.eventmanagement.service.EventService;
+import jakarta.validation.Valid;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/events")
+public class EventController {
+
+    @Autowired
+    private EventService eventService;
+
+    @PostMapping
+    public ResponseEntity<EventResponseDto> createEvent(@Valid @RequestBody EventRequestDto eventRequestDto) {
+        EventResponseDto createdEvent = eventService.createEvent(eventRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdEvent);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<EventResponseDto> getEventById(@PathVariable Long id) {
+        EventResponseDto event = eventService.getEventById(id);
+        return ResponseEntity.ok(event);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<EventResponseDto>> getAllEvents() {
+        List<EventResponseDto> events = eventService.getAllEvents();
+        return ResponseEntity.ok(events);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<EventResponseDto> updateEvent(@PathVariable Long id, @Valid @RequestBody EventRequestDto eventRequestDto) {
+        EventResponseDto updatedEvent = eventService.updateEvent(id, eventRequestDto);
+        return ResponseEntity.ok(updatedEvent);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteEvent(@PathVariable Long id) {
+        eventService.deleteEvent(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+
+RegistrationController.java
+===============================================================================
+package com.example.eventmanagement.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import com.example.eventmanagement.dto.RegistrationRequestDto;
+import com.example.eventmanagement.dto.RegistrationResponseDto;
+import com.example.eventmanagement.service.RegistrationService;
+import jakarta.validation.Valid;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/registrations")
+public class RegistrationController {
+    
+    @Autowired
+    private RegistrationService registrationService;
+
+    @PostMapping
+    public ResponseEntity<RegistrationResponseDto> createRegistration(@Valid @RequestBody RegistrationRequestDto registrationRequestDto) {
+        RegistrationResponseDto createdRegistration = registrationService.createRegistration(registrationRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdRegistration);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<RegistrationResponseDto> getRegistrationById(@PathVariable Long id) {
+        RegistrationResponseDto registration = registrationService.getRegistrationById(id);
+        return ResponseEntity.ok(registration);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<RegistrationResponseDto>> getAllRegistrations() {
+        List<RegistrationResponseDto> registrations = registrationService.getAllRegistrations();
+        return ResponseEntity.ok(registrations);
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<RegistrationResponseDto>> getRegistrationsByUserId(@PathVariable Long userId) {
+        List<RegistrationResponseDto> registrations = registrationService.getRegistrationsByUserId(userId);
+        return ResponseEntity.ok(registrations);
+    }
+
+    @GetMapping("/event/{eventId}")
+    public ResponseEntity<List<RegistrationResponseDto>> getRegistrationsByEventId(@PathVariable Long eventId) {
+        List<RegistrationResponseDto> registrations = registrationService.getRegistrationsByEventId(eventId);
+        return ResponseEntity.ok(registrations);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRegistration(@PathVariable Long id) {
+        registrationService.deleteRegistration(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+
+BUGGY CODE DEBUGGING SOLUTION
+===============================================================================
+
+ORIGINAL BUGGY CODE:
+===============================================================================
+public class EventServiceImpl implements EventService {
+    
+    @Autowired
+    private EventRepository eventRepo;
+    
+    @Override
+    public Event createEvent(Event event) {
+        if(event.getTitle().length() < 0) {
+            throw new RuntimeException("Invalid title");
+        }
+        return eventRepo.save(event);
+    }
+}
+
+IDENTIFIED BUGS:
+===============================================================================
+
+1. **LOGICAL ERROR IN CONDITION**: 
+   - Bug: `if(event.getTitle().length() < 0)`
+   - Issue: String length can never be negative. This condition will never be true.
+   - Impact: Invalid titles (empty or null) will not be caught.
+
+2. **NULL POINTER EXCEPTION RISK**:
+   - Bug: No null check for `event.getTitle()`
+   - Issue: If title is null, calling `.length()` will throw NullPointerException.
+   - Impact: Application crash when null title is passed.
+
+3. **IMPROPER EXCEPTION HANDLING**:
+   - Bug: Using generic `RuntimeException`
+   - Issue: Should use specific custom exceptions for better error handling.
+   - Impact: Poor error messaging and handling in global exception handler.
+   
+4. **WRONG PARAMETER TYPE**:
+   - Bug: Method accepts `Event` entity directly
+   - Issue: Should accept DTO for proper separation of concerns.
+   - Impact: Violates layered architecture principles.
+
+CORRECTED CODE:
+===============================================================================
+@Service
+public class EventServiceImpl implements EventService {
+    
+    @Autowired
+    private EventRepository eventRepository;
+    
+    @Override
+    public EventResponseDto createEvent(EventRequestDto eventRequestDto) {
+        // Additional date validation in service layer (DTO already has @Future validation)
+        if (eventRequestDto.getDate() != null && eventRequestDto.getDate().isBefore(LocalDate.now())) {
+            throw new InvalidRequestException("Event date must be in the future");
+        }
+        
+        // Convert DTO to Entity
+        Event event = EventMapper.toEvent(eventRequestDto);
+        
+        // Save event
+        Event savedEvent = eventRepository.save(event);
+        
+        // Convert Entity to Response DTO
+        return EventMapper.toEventResponseDto(savedEvent);
+    }
+    
+    @Override
+    public EventResponseDto updateEvent(Long id, EventRequestDto eventRequestDto) {
+        if (id == null || id <= 0) {
+            throw new InvalidRequestException("Invalid event ID provided");
+        }
+        
+        // Additional date validation in service layer
+        if (eventRequestDto.getDate() != null && eventRequestDto.getDate().isBefore(LocalDate.now())) {
+            throw new InvalidRequestException("Event date must be in the future");
+        }
+        
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
+        event.setTitle(eventRequestDto.getTitle());
+        event.setDescription(eventRequestDto.getDescription());
+        event.setDate(eventRequestDto.getDate());
+        event.setLocation(eventRequestDto.getLocation());
+        Event updatedEvent = eventRepository.save(event);
+        return EventMapper.toEventResponseDto(updatedEvent);
+    }
+}
+
+
+README.md
+===============================================================================
+# Event Management System
+
+A Spring Boot REST API application for managing events, users, and registrations.
+
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Database Schema](#database-schema)
+- [API Endpoints](#api-endpoints)
+- [Setup](#setup)
+- [Sample Requests](#sample-requests)
+- [Error Handling](#error-handling)
+- [Author](#author)
+- [License](#license)
+
+## Features
+
+- User management (CRUD operations)
+- Event management (CRUD operations)
+- Event registration system
+- User registration tracking
+- Input validation and error handling
+- Global exception handling
+- Duplicate prevention
+- Parameter validation
+
+## Tech Stack
+
+- **Java 17**
+- **Spring Boot 3.5.4**
+- **Spring Data JPA**
+- **Spring Web**
+- **Spring Validation**
+- **PostgreSQL**
+- **Maven**
+- **Jackson (JSON processing)**
+
+## Project Structure
+
+```
+eventmanagement/
+├── src/main/java/com/example/eventmanagement/
+│   ├── controller/          # REST API Controllers
+│   │   ├── UserController.java
+│   │   ├── EventController.java
+│   │   └── RegistrationController.java
+│   ├── service/             # Business Logic Layer
+│   │   ├── UserService.java
+│   │   ├── UserServiceImpl.java
+│   │   ├── EventService.java
+│   │   ├── EventServiceImpl.java
+│   │   ├── RegistrationService.java
+│   │   └── RegistrationServiceImpl.java
+│   ├── repository/          # Data Access Layer
+│   │   ├── UserRepository.java
+│   │   ├── EventRepository.java
+│   │   └── RegistrationRepository.java
+│   ├── domain/              # JPA Entity Classes
+│   │   ├── User.java
+│   │   ├── Event.java
+│   │   └── Registrations.java
+│   ├── dto/                 # Data Transfer Objects
+│   │   ├── UserRequestDto.java
+│   │   ├── UserResponseDto.java
+│   │   ├── EventRequestDto.java
+│   │   ├── EventResponseDto.java
+│   │   ├── RegistrationRequestDto.java
+│   │   └── RegistrationResponseDto.java
+│   ├── mapper/              # Entity-DTO Mappers
+│   │   ├── UserMapper.java
+│   │   ├── EventMapper.java
+│   │   └── RegistrationsMapper.java
+│   ├── exceptions/          # Custom Exception Classes
+│   │   ├── GlobalExceptions.java
+│   │   ├── ResourceNotFoundException.java
+│   │   ├── DuplicateResourceException.java
+│   │   ├── InvalidRequestException.java
+│   │   └── RegistrationLimitExceededException.java
+│   └── EventmanagementApplication.java
+├── src/main/resources/
+│   └── application.properties
+├── pom.xml
+└── README.md
+```
+
+## Database Schema
+
+### Tables
+- `event_users` - User information
+- `events` - Event details
+- `registrations` - User-Event registrations
+
+## API Endpoints
+
+### Users
+- `POST /api/users` - Create user
+- `GET /api/users` - Get all users
+- `GET /api/users/{id}` - Get user by ID
+- `PUT /api/users/{id}` - Update user
+- `DELETE /api/users/{id}` - Delete user
+
+### Events
+- `POST /api/events` - Create event
+- `GET /api/events` - Get all events
+- `GET /api/events/{id}` - Get event by ID
+- `PUT /api/events/{id}` - Update event
+- `DELETE /api/events/{id}` - Delete event
+
+### Registrations
+- `POST /api/registrations` - Register user to event
+- `GET /api/registrations` - Get all registrations
+- `GET /api/registrations/{id}` - Get registration by ID
+- `GET /api/registrations/user/{userId}` - Get registrations by user
+- `GET /api/registrations/event/{eventId}` - Get registrations by event
+- `DELETE /api/registrations/{id}` - Delete registration
+
+## Setup
+
+1. **Database Setup**
+   ```sql
+   CREATE DATABASE postgres;
+   ```
+
+2. **Configuration**
+   Update `application.properties`:
+   ```properties
+   spring.datasource.url=jdbc:postgresql://localhost:5432/postgres
+   spring.datasource.username=postgres
+   spring.datasource.password=your_password
+   server.port=8094
+   ```
+
+3. **Run Application**
+   ```bash
+   mvn spring-boot:run
+   ```
+
+## Sample Requests
+
+### Create User
+```json
+POST /api/users
+{
+  "name": "Alice Cooper",
+  "email": "alice.cooper@techcorp.com"
+}
+```
+
+### Create Event
+```json
+POST /api/events
+{
+  "title": "AI Conference",
+  "description": "Latest trends in AI technology",
+  "date": "2024-07-25",
+  "location": "Tech Center"
+}
+```
+
+### Register User to Event
+```json
+POST /api/registrations
+{
+  "userId": 1,
+  "eventId": 1
+}
+```
+
+## Error Handling
+
+The application includes comprehensive error handling with custom exceptions:
+
+- `400 Bad Request` - Invalid input data or parameters
+- `404 Not Found` - Resource not found
+- `409 Conflict` - Duplicate resource (email, registration)
+- `500 Internal Server Error` - Server error
+
+### Custom Exceptions
+- **ResourceNotFoundException** - When requested entity doesn't exist
+- **DuplicateResourceException** - When trying to create duplicate resources
+- **InvalidRequestException** - When request parameters are invalid
+- **RegistrationLimitExceededException** - For future registration limits
+
+## Author
+
+**Lokeshwaran M**  
+Software Developer  
+Email: lokeshwaran.m@epssw.com  
+
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+```
+MIT License
+
+Copyright (c) 2024 Lokesh M
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+SAMPLE API OUTPUTS
+===============================================================================
+
+1. CREATE USER - POST /api/users
+Request:
+{
+  "name": "Alice Cooper",
+  "email": "alice.cooper@techcorp.com"
+}
+
+Response (201 Created):
+{
+  "id": 1,
+  "name": "Alice Cooper",
+  "email": "alice.cooper@techcorp.com"
+}
+
+2. GET ALL USERS - GET /api/users
+Response (200 OK):
+[
+  {
+    "id": 1,
+    "name": "Alice Cooper",
+    "email": "alice.cooper@techcorp.com"
+  },
+  {
+    "id": 2,
+    "name": "Robert Martinez",
+    "email": "robert.martinez@innovate.io"
+  }
+]
+
+3. GET USER BY ID - GET /api/users/1
+Response (200 OK):
+{
+  "id": 1,
+  "name": "Alice Cooper",
+  "email": "alice.cooper@techcorp.com"
+}
+
+4. UPDATE USER - PUT /api/users/1
+Request:
+{
+  "name": "Alice Cooper Updated",
+  "email": "alice.updated@techcorp.com"
+}
+
+Response (200 OK):
+{
+  "id": 1,
+  "name": "Alice Cooper Updated",
+  "email": "alice.updated@techcorp.com"
+}
+
+5. CREATE EVENT - POST /api/events
+Request:
+{
+  "title": "AI and Machine Learning Conference",
+  "description": "Explore the latest trends in artificial intelligence",
+  "date": "2024-07-25",
+  "location": "Silicon Valley Convention Center"
+}
+
+Response (201 Created):
+{
+  "id": 1,
+  "title": "AI and Machine Learning Conference",
+  "description": "Explore the latest trends in artificial intelligence",
+  "date": "2024-07-25",
+  "location": "Silicon Valley Convention Center"
+}
+
+6. GET ALL EVENTS - GET /api/events
+Response (200 OK):
+[
+  {
+    "id": 1,
+    "title": "AI and Machine Learning Conference",
+    "description": "Explore the latest trends in artificial intelligence",
+    "date": "2024-07-25",
+    "location": "Silicon Valley Convention Center"
+  }
+]
+
+7. GET EVENT BY ID - GET /api/events/1
+Response (200 OK):
+{
+  "id": 1,
+  "title": "AI and Machine Learning Conference",
+  "description": "Explore the latest trends in artificial intelligence",
+  "date": "2024-07-25",
+  "location": "Silicon Valley Convention Center"
+}
+
+8. REGISTER USER TO EVENT - POST /api/registrations
+Request:
+{
+  "userId": 1,
+  "eventId": 1
+}
+
+Response (201 Created):
+{
+  "id": 1,
+  "userId": 1,
+  "userName": "Alice Cooper",
+  "eventId": 1,
+  "eventTitle": "AI and Machine Learning Conference",
+  "registrationDate": "2024-01-15"
+}
+
+9. GET REGISTRATIONS BY EVENT ID - GET /api/registrations/event/1
+Response (200 OK):
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "userName": "Alice Cooper",
+    "eventId": 1,
+    "eventTitle": "AI and Machine Learning Conference",
+    "registrationDate": "2024-01-15"
+  },
+  {
+    "id": 2,
+    "userId": 2,
+    "userName": "Robert Martinez",
+    "eventId": 1,
+    "eventTitle": "AI and Machine Learning Conference",
+    "registrationDate": "2024-01-15"
+  }
+]
+
+10. GET ALL REGISTRATIONS - GET /api/registrations
+Response (200 OK):
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "userName": "Alice Cooper",
+    "eventId": 1,
+    "eventTitle": "AI and Machine Learning Conference",
+    "registrationDate": "2024-01-15"
+  }
+]
+
+11. GET REGISTRATIONS BY USER ID - GET /api/registrations/user/1
+Response (200 OK):
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "userName": "Alice Cooper",
+    "eventId": 1,
+    "eventTitle": "AI and Machine Learning Conference",
+    "registrationDate": "2024-01-15"
+  }
+]
+
+12. DELETE USER - DELETE /api/users/1
+Response (204 No Content):
+(Empty response body)
+
+13. DELETE EVENT - DELETE /api/events/1
+Response (204 No Content):
+(Empty response body)
+
+14. DELETE REGISTRATION - DELETE /api/registrations/1
+Response (204 No Content):
+(Empty response body)
+
+ERROR RESPONSES:
+
+15. DUPLICATE EMAIL ERROR - POST /api/users
+Request:
+{
+  "name": "Another User",
+  "email": "alice.cooper@techcorp.com"
+}
+
+Response (409 Conflict):
+"User with email alice.cooper@techcorp.com already exists"
+
+16. USER NOT FOUND ERROR - GET /api/users/999
+Response (404 Not Found):
+"User not found with id: 999"
+
+17. VALIDATION ERROR - POST /api/users
+Request:
+{
+  "name": "",
+  "email": "invalid-email"
+}
+
+Response (400 Bad Request):
+{
+  "name": "Name is mandatory",
+  "email": "Invalid email format"
+}
+
+18. INVALID PARAMETER ERROR - GET /api/users/-1
+Response (400 Bad Request):
+"Invalid user ID provided"
+
+19. PAST DATE VALIDATION ERROR - POST /api/events
+Request:
+{
+  "title": "Past Event",
+  "description": "This event is in the past",
+  "date": "2023-01-01",
+  "location": "Old Venue"
+}
+
+Response (400 Bad Request):
+{
+  "date": "Event date must be in the future"
+}
+
+Note: Date validation occurs at both DTO level (@Future annotation) and service layer.
+
+===============================================================================
+                            END OF DOCUMENTATION
+===============================================================================
