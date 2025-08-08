@@ -650,6 +650,518 @@ public class RegistrationController {
     }
 }
 
+UserService.java
+===============================================================================
+package com.example.eventmanagement.service;
+
+import com.example.eventmanagement.dto.UserRequestDto;
+import com.example.eventmanagement.dto.UserResponseDto;
+import java.util.List;
+
+public interface UserService {
+    UserResponseDto createUser(UserRequestDto userRequestDto);
+    UserResponseDto getUserById(Long id);
+    List<UserResponseDto> getAllUsers();
+    UserResponseDto updateUser(Long id, UserRequestDto userRequestDto);
+    void deleteUser(Long id);
+}
+
+UserServiceImpl.java
+===============================================================================
+package com.example.eventmanagement.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import com.example.eventmanagement.domain.User;
+import com.example.eventmanagement.dto.UserRequestDto;
+import com.example.eventmanagement.dto.UserResponseDto;
+import com.example.eventmanagement.mapper.UserMapper;
+import com.example.eventmanagement.repository.UserRepository;
+import com.example.eventmanagement.exceptions.ResourceNotFoundException;
+import com.example.eventmanagement.exceptions.DuplicateResourceException;
+import com.example.eventmanagement.exceptions.InvalidRequestException;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class UserServiceImpl implements UserService {
+    @Autowired
+    private UserRepository userRepository;
+
+    @Override
+    public UserResponseDto createUser(UserRequestDto userRequestDto) {
+        if (userRepository.existsByEmail(userRequestDto.getEmail())) {
+            throw new DuplicateResourceException("User with email " + userRequestDto.getEmail() + " already exists");
+        }
+        User user = UserMapper.toUser(userRequestDto);
+        User savedUser = userRepository.save(user);
+        return UserMapper.toUserResponseDto(savedUser);
+    }
+
+    @Override
+    public UserResponseDto getUserById(Long id) {
+        if (id == null || id <= 0) {
+            throw new InvalidRequestException("Invalid user ID provided");
+        }
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        return UserMapper.toUserResponseDto(user);
+    }
+
+    @Override
+    public List<UserResponseDto> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(UserMapper::toUserResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public UserResponseDto updateUser(Long id, UserRequestDto userRequestDto) {
+        if (id == null || id <= 0) {
+            throw new InvalidRequestException("Invalid user ID provided");
+        }
+        User user = userRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        user.setName(userRequestDto.getName());
+        user.setEmail(userRequestDto.getEmail());
+        User updatedUser = userRepository.save(user);
+        return UserMapper.toUserResponseDto(updatedUser);
+    }
+
+    @Override
+    public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new ResourceNotFoundException("User not found with id: " + id);
+        }
+        userRepository.deleteById(id);
+    }
+}
+
+EventService.java
+===============================================================================
+package com.example.eventmanagement.service;
+
+import com.example.eventmanagement.dto.EventRequestDto;
+import com.example.eventmanagement.dto.EventResponseDto;
+import java.util.List;
+
+public interface EventService {
+    EventResponseDto createEvent(EventRequestDto eventRequestDto);
+    EventResponseDto getEventById(Long id);
+    List<EventResponseDto> getAllEvents();
+    EventResponseDto updateEvent(Long id, EventRequestDto eventRequestDto);
+    void deleteEvent(Long id);
+}
+
+EventServiceImpl.java
+===============================================================================
+package com.example.eventmanagement.service;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.example.eventmanagement.domain.Event;
+import com.example.eventmanagement.dto.EventRequestDto;
+import com.example.eventmanagement.dto.EventResponseDto;
+import com.example.eventmanagement.exceptions.InvalidRequestException;
+import com.example.eventmanagement.exceptions.ResourceNotFoundException;
+import com.example.eventmanagement.mapper.EventMapper;
+import com.example.eventmanagement.repository.EventRepository;
+
+@Service
+public class EventServiceImpl implements EventService {
+    
+    @Autowired
+    private EventRepository eventRepository;
+
+    @Override
+    public EventResponseDto createEvent(EventRequestDto eventRequestDto) {
+        if (eventRequestDto.getDate() != null && eventRequestDto.getDate().isBefore(LocalDate.now())) {
+            throw new InvalidRequestException("Event date must be in the future");
+        }
+        
+        Event event = EventMapper.toEvent(eventRequestDto);
+        Event savedEvent = eventRepository.save(event);
+        return EventMapper.toEventResponseDto(savedEvent);
+    }
+
+    @Override
+    public EventResponseDto getEventById(Long id) {
+        if (id == null || id <= 0) {
+            throw new InvalidRequestException("Invalid event ID provided");
+        }
+        Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
+        return EventMapper.toEventResponseDto(event);
+    }
+
+    @Override
+    public List<EventResponseDto> getAllEvents() {
+        return eventRepository.findAll().stream()
+                .map(EventMapper::toEventResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public EventResponseDto updateEvent(Long id, EventRequestDto eventRequestDto) {
+        if (id == null || id <= 0) {
+            throw new InvalidRequestException("Invalid event ID provided");
+        }
+        
+        // Additional date validation in service layer
+        if (eventRequestDto.getDate() != null && eventRequestDto.getDate().isBefore(LocalDate.now())) {
+            throw new InvalidRequestException("Event date must be in the future");
+        }
+        
+        Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
+        event.setTitle(eventRequestDto.getTitle());
+        event.setDescription(eventRequestDto.getDescription());
+        event.setDate(eventRequestDto.getDate());
+        event.setLocation(eventRequestDto.getLocation());
+        Event updatedEvent = eventRepository.save(event);
+        return EventMapper.toEventResponseDto(updatedEvent);
+    }
+
+    @Override
+    public void deleteEvent(Long id) {
+        if (!eventRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Event not found with id: " + id);
+        }
+        eventRepository.deleteById(id);
+    }
+}
+
+RegistrationService.java
+===============================================================================
+package com.example.eventmanagement.service;
+
+import com.example.eventmanagement.dto.RegistrationRequestDto;
+import com.example.eventmanagement.dto.RegistrationResponseDto;
+import java.util.List;
+
+public interface RegistrationService {
+    RegistrationResponseDto createRegistration(RegistrationRequestDto registrationRequestDto);
+    RegistrationResponseDto getRegistrationById(Long id);
+    List<RegistrationResponseDto> getAllRegistrations();
+    List<RegistrationResponseDto> getRegistrationsByUserId(Long userId);
+    List<RegistrationResponseDto> getRegistrationsByEventId(Long eventId);
+    void deleteRegistration(Long id);
+}
+
+RegistrationServiceImpl.java
+===============================================================================
+package com.example.eventmanagement.service;
+
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.example.eventmanagement.domain.Registrations;
+import com.example.eventmanagement.domain.User;
+import com.example.eventmanagement.domain.Event;
+import com.example.eventmanagement.dto.RegistrationRequestDto;
+import com.example.eventmanagement.dto.RegistrationResponseDto;
+import com.example.eventmanagement.mapper.RegistrationsMapper;
+import com.example.eventmanagement.repository.RegistrationRepository;
+import com.example.eventmanagement.repository.UserRepository;
+import com.example.eventmanagement.repository.EventRepository;
+import com.example.eventmanagement.exceptions.ResourceNotFoundException;
+import com.example.eventmanagement.exceptions.DuplicateResourceException;
+import com.example.eventmanagement.exceptions.InvalidRequestException;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class RegistrationServiceImpl implements RegistrationService {
+
+    @Autowired
+    private RegistrationRepository registrationRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private EventRepository eventRepository;
+
+    @Override
+    public RegistrationResponseDto createRegistration(RegistrationRequestDto registrationRequestDto) {
+        if (registrationRequestDto.getUserId() == null || registrationRequestDto.getUserId() <= 0) {
+            throw new InvalidRequestException("Invalid user ID provided");
+        }
+        if (registrationRequestDto.getEventId() == null || registrationRequestDto.getEventId() <= 0) {
+            throw new InvalidRequestException("Invalid event ID provided");
+        }
+        
+        User user = userRepository.findById(registrationRequestDto.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + registrationRequestDto.getUserId()));
+        Event event = eventRepository.findById(registrationRequestDto.getEventId())
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + registrationRequestDto.getEventId()));
+    
+        if (registrationRepository.existsByUserIdAndEventId(registrationRequestDto.getUserId(), registrationRequestDto.getEventId())) {
+            throw new DuplicateResourceException("User is already registered for this event");
+        }
+        
+        Registrations registration = RegistrationsMapper.toRegistration(registrationRequestDto, user, event);
+        Registrations savedRegistration = registrationRepository.save(registration);
+        return RegistrationsMapper.toRegistrationResponseDto(savedRegistration);
+    }
+
+    @Override
+    public RegistrationResponseDto getRegistrationById(Long id) {
+        if (id == null || id <= 0) {
+            throw new InvalidRequestException("Invalid registration ID provided");
+        }
+        Registrations registration = registrationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Registration not found with id: " + id));
+        return RegistrationsMapper.toRegistrationResponseDto(registration);
+    }
+
+    @Override
+    public List<RegistrationResponseDto> getAllRegistrations() {
+        return registrationRepository.findAll().stream()
+                .map(RegistrationsMapper::toRegistrationResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<RegistrationResponseDto> getRegistrationsByUserId(Long userId) {
+        if (userId == null || userId <= 0) {
+            throw new InvalidRequestException("Invalid user ID provided");
+        }
+        return registrationRepository.findByUserId(userId).stream()
+                .map(RegistrationsMapper::toRegistrationResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<RegistrationResponseDto> getRegistrationsByEventId(Long eventId) {
+        if (eventId == null || eventId <= 0) {
+            throw new InvalidRequestException("Invalid event ID provided");
+        }
+        return registrationRepository.findByEventId(eventId).stream()
+                .map(RegistrationsMapper::toRegistrationResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteRegistration(Long id) {
+        if (!registrationRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Registration not found with id: " + id);
+        }
+        registrationRepository.deleteById(id);
+    }
+}
+
+UserRepository.java
+===============================================================================
+package com.example.eventmanagement.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.example.eventmanagement.domain.User;
+
+public interface  UserRepository extends JpaRepository<User, Long>{
+    boolean existsByEmail(String email);
+}
+
+EventRepository.java
+===============================================================================
+package com.example.eventmanagement.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.example.eventmanagement.domain.Event;
+
+public interface EventRepository extends JpaRepository<Event, Long>{
+    
+}
+
+RegistrationRepository.java
+===============================================================================
+package com.example.eventmanagement.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.example.eventmanagement.domain.Registrations;
+import java.util.List;
+
+public interface RegistrationRepository extends JpaRepository<Registrations, Long>{
+    List<Registrations> findByUserId(Long userId);
+    List<Registrations> findByEventId(Long eventId);
+    boolean existsByUserIdAndEventId(Long userId, Long eventId);
+}
+
+ResourceNotFoundException.java
+===============================================================================
+package com.example.eventmanagement.exceptions;
+
+public class ResourceNotFoundException extends RuntimeException{
+    public ResourceNotFoundException(String message) {
+        super(message);
+    }
+    
+}
+
+DuplicateResourceException.java
+===============================================================================
+package com.example.eventmanagement.exceptions;
+
+public class DuplicateResourceException extends RuntimeException {
+    public DuplicateResourceException(String message) {
+        super(message);
+    }
+}
+
+InvalidRequestException.java
+===============================================================================
+package com.example.eventmanagement.exceptions;
+
+public class InvalidRequestException extends RuntimeException {
+    public InvalidRequestException(String message) {
+        super(message);
+    }
+}
+
+GlobalExceptions.java
+===============================================================================
+package com.example.eventmanagement.exceptions;
+
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+public class GlobalExceptions {
+    
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<String> handleResourceNotFoundException(ResourceNotFoundException e){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception e){
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+    }
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<String> handleInvalidRequestException(InvalidRequestException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<String> handleDuplicateResourceException(DuplicateResourceException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+    }
+
+    
+    
+}
+
+UserMapper.java
+===============================================================================
+package com.example.eventmanagement.mapper;
+
+import com.example.eventmanagement.domain.User;
+import com.example.eventmanagement.dto.UserRequestDto;
+import com.example.eventmanagement.dto.UserResponseDto;
+
+public class UserMapper {
+    
+        public static User toUser(UserRequestDto userDto) {
+        User user = new User();
+        user.setName(userDto.getName());
+        user.setEmail(userDto.getEmail());
+        return user;
+    }
+    public static UserResponseDto toUserResponseDto(User user) {
+        UserResponseDto userDto = new UserResponseDto();
+        userDto.setId(user.getId());
+        userDto.setName(user.getName());
+        userDto.setEmail(user.getEmail());
+        return userDto;
+    }
+
+
+    
+}
+
+EventMapper.java
+===============================================================================
+package com.example.eventmanagement.mapper;
+
+import com.example.eventmanagement.domain.Event;
+import com.example.eventmanagement.dto.EventRequestDto;
+import com.example.eventmanagement.dto.EventResponseDto;
+
+public class EventMapper {
+    
+    public static Event toEvent(EventRequestDto eventRequestDto) {
+        Event event = new Event();
+        event.setTitle(eventRequestDto.getTitle());
+        event.setDescription(eventRequestDto.getDescription());
+        event.setDate(eventRequestDto.getDate());
+        event.setLocation(eventRequestDto.getLocation());
+        return event;
+    }
+    
+    public static EventResponseDto toEventResponseDto(Event event) {
+        EventResponseDto eventDto = new EventResponseDto();
+        eventDto.setId(event.getId());
+        eventDto.setTitle(event.getTitle());
+        eventDto.setDescription(event.getDescription());
+        eventDto.setDate(event.getDate());
+        eventDto.setLocation(event.getLocation());
+        return eventDto;
+    }
+}
+
+RegistrationsMapper.java
+===============================================================================
+package com.example.eventmanagement.mapper;
+
+import com.example.eventmanagement.domain.Registrations;
+import com.example.eventmanagement.domain.User;
+import com.example.eventmanagement.domain.Event;
+import com.example.eventmanagement.dto.RegistrationRequestDto;
+import com.example.eventmanagement.dto.RegistrationResponseDto;
+
+public class RegistrationsMapper {
+    
+    public static Registrations toRegistration(RegistrationRequestDto registrationDto, User user, Event event) {
+        Registrations registration = new Registrations();
+        registration.setUser(user);
+        registration.setEvent(event);
+        registration.setRegistrationDate(java.time.LocalDate.now());
+        return registration;
+    }
+    
+    public static RegistrationResponseDto toRegistrationResponseDto(Registrations registration) {
+        RegistrationResponseDto registrationDto = new RegistrationResponseDto();
+        registrationDto.setId(registration.getId());
+        registrationDto.setUserId(registration.getUser().getId());
+        registrationDto.setUserName(registration.getUser().getName());
+        registrationDto.setEventId(registration.getEvent().getId());
+        registrationDto.setEventTitle(registration.getEvent().getTitle());
+        registrationDto.setRegistrationDate(registration.getRegistrationDate());
+        return registrationDto;
+    }
+}
+
 BUGGY CODE DEBUGGING SOLUTION
 ===============================================================================
 
